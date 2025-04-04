@@ -1,0 +1,9 @@
+{
+  "name": "NfcOpenReader",
+  "displayName": "NfcOpenReader",
+  "extra": {
+    "eas": {
+      "projectId": "38e34243-7279-439b-836e-e1aeacb3a7cd"
+    }
+  }
+}
