@@ -57,6 +57,25 @@ function NfcPromptAndroid(props) {
         NfcManager.cancelTechnologyRequest().catch(() => 0);
       }, 200);
       _setData({ visible: false, message });
+
+      const { data: latestEntry, error: fetchError } = await supabase
+      .from('entries')
+      .select('isLocked')
+      .eq('user_name', entryData.user)
+      .order('id', { ascending: false }) // assuming higher id means more recent
+      .limit(1)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching latest entry for lock status:', fetchError);
+      Alert.alert('Error', 'Could not verify user lock status.');
+      return;
+    }
+    console.log("User lock status: ", latestEntry?.isLocked)
+    if (latestEntry?.isLocked) {
+      
+      return Alert.alert('Account Disabled', 'Please contact admin');
+    }
   
       // Check if Biometrics is available
       const { available, biometryType } = await rnBiometrics.isSensorAvailable();
@@ -65,7 +84,7 @@ function NfcPromptAndroid(props) {
         Alert.alert('Error', 'Biometric authentication is not available on this device.');
         return;
       }
-  
+
       const promptMessage = biometryType === 'FaceID' ? 'Authenticate using Face ID' : 'Authenticate using Fingerprint';
   
       // Perform biometric authentication
@@ -81,6 +100,7 @@ function NfcPromptAndroid(props) {
             user_name: entryData.user,
             entry_date: entryData.entryDate,
             entry_time: entryData.entryTime,
+            isLocked: false
           },
         ]);
   
@@ -133,6 +153,7 @@ const entryData = {
   user: "Adi Jain",
   entryDate: currentDate,
   entryTime: currentTime,
+  
 };
  
 

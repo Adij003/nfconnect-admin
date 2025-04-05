@@ -17,6 +17,8 @@ import CustomTransceiveScreen from './Screens/CustomTransceive';
 import SettingsScreen from './Screens/Settings';
 import SavedRecordScreen from './Screens/SavedRecord';
 import AddRoomScreen from './Screens/AddRoom'; // ✅ Now properly handled
+import DetailUser from './Screens/DetailUser'
+import DetailUserNew from './Screens/DetailUserNew'
 import NfcPromptAndroid from './Components/NfcPromptAndroid';
 import Toast from './Components/Toast';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -137,6 +139,16 @@ function Main(props) {
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS, // Smooth transition
         }}
       />
+        <MainStack.Screen
+        name="DetailUser"
+        component={DetailUser}
+        options={{
+          title: 'Detailed User Information',
+          presentation: 'modal',
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS, // Smooth transition
+        }}
+      />
+      
     </MainStack.Navigator>
   );
 }

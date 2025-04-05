@@ -2,77 +2,93 @@ import * as React from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useState, useEffect } from 'react';
 import supabase from '../../database/supabaseClient';
-import { Button, IconButton } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Button } from 'react-native-paper';
 
-
-function SavedRecordScreen({navigation}) {
+function SavedRecordScreen() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(true)
+  const [isLocked, setIsLocked] = useState(false); // Track locked state
 
-  // Function to fetch data
   async function fetchEntries() {
-    setLoading(true); // Show loading while fetching data
+    setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('entries')  // Table name
-        .select('*');      // Fetch all columns
-
-      if (error) {
-        throw error;
+        .from('entries')
+        .select('*')
+        .eq('user_name', 'Chaytali Jawalekar'); 
+  
+      if (error) throw error;
+  
+      setEntries(data || []);
+      if (data?.length > 0) {
+        setIsLocked(data[0].isLocked); // Initialize toggle based on current value
       }
-
-      setTimeout(() => {
-        setEntries(data || []);
-        setLoading(false);
-      }, 1500); // Simulating a delay
     } catch (err) {
-      console.error('Error fetching entries:', err.message);
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   }
-
-  // Fetch data on component mount
+  
   useEffect(() => {
     fetchEntries();
   }, []);
 
-  // Refresh button handler
   const handleRefresh = () => {
     fetchEntries();
   };
 
+  const toggleLockUser = async () => {
+    const newValue = !isLocked;
+  
+    try {
+      const { error } = await supabase
+        .from('entries')
+        .update({ isLocked: newValue })
+        .eq('user_name', 'Chaytali Jawalekar'); // <-- updated here
+  
+      if (error) throw error;
+  
+      setIsLocked(newValue);
+      fetchEntries();
+    } catch (err) {
+      setError(`Failed to update lock state: ${err.message}`);
+    }
+  };
+  
+
   return (
     <View style={styles.container}>
-      {/* Refresh Button */}
-    
+      <Text style={styles.title}>User History: Chaytali Jawalekar</Text> {/* <-- updated here */}
 
-      <Text style={styles.title}>All User History</Text>
-      <Text style={styles.manageRoomText}>Total User(s): 1</Text>
+      <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
+        <Text style={styles.refreshText}>Refresh</Text>
+      </TouchableOpacity>
 
-
-
-      <TouchableOpacity style={styles.card}
-         onPress={() => {
-          navigation.navigate('Main', { screen: 'DetailUser' });
-        }}
+      {/* Lock User Toggle Button */}
+      <TouchableOpacity
+        style={[
+          styles.lockButton,
+          { backgroundColor: isLocked ? '#ff4d4d' : '#4CAF50' }
+        ]}
+        onPress={toggleLockUser}
       >
-          <Text style={styles.manageRoomText}>User: Adi Jain </Text>
-        </TouchableOpacity>
+        <Text style={styles.lockButtonText}>
+          {isLocked ? 'Unlock User' : 'Lock User'}
+        </Text>
+      </TouchableOpacity>
 
-      {/* {loading ? (
+      {loading ? (
         <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : entries.length > 0 ? (
         <FlatList
           data={entries}
-          keyExtractor={(item) => item.id.toString()} 
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.cardText}>User: {item.user_name}</Text>
@@ -84,7 +100,7 @@ function SavedRecordScreen({navigation}) {
         />
       ) : (
         <Text style={styles.noEntryText}>No entry records found</Text>
-      )} */}
+      )}
     </View>
   );
 }
@@ -101,17 +117,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   refreshButton: {
-    backgroundColor: 'white',  // White background
-    borderColor: 'black',      // Black border
-    borderWidth: 1,            // Thin border
+    backgroundColor: 'white',
+    borderColor: 'black',
+    borderWidth: 1,
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 10,
   },
-  
   refreshText: {
-    color: 'black',            // Black text
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  lockButton: {
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  lockButtonText: {
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -122,7 +148,6 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#f5f5f5',
-    marginTop: 40,
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
